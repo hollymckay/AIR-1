@@ -360,6 +360,9 @@ sensor:
         return NAN;
       }
 
+      // Fetch the baseline parameter
+      float baseline = id(baseline_offset).state;
+
       // Fetch the calculated Predicted Room Temperature
       float t_room = id(predicted_room_temperature).state;
 
@@ -370,14 +373,18 @@ sensor:
       float rh_scd = id(scd40_humidity).state;
 
       // Ensure all sensors are actively broadcasting valid numbers
-      if (std::isnan(t_room) || std::isnan(t_sen) || std::isnan(rh_sen) || std::isnan(t_scd) || std::isnan(rh_scd)) {
+      if (std::isnan(t_room) || std::isnan(t_sen) || std::isnan(rh_sen) || std::isnan(t_scd) || std::isnan(rh_scd) || std::isnan(baseline)) {
         return NAN;
       }
 
+      // modify sensor values with same baseline to balance
+      set t_sen = t_sen + baseline;
+      set t_scd = t_scd + baseline;
+
       // Calculate Saturation Vapor Pressures (Magnus Formula)
-      float mag_room = expf((17.62 * t_room) / (243.12 + t_room));
-      float mag_sen = expf((17.62 * t_sen) / (243.12 + t_sen));
-      float mag_scd = expf((17.62 * t_scd) / (243.12 + t_scd));
+      float mag_room = expf((17.625 * t_room) / (243.04 + t_room));
+      float mag_sen = expf((17.625 * t_sen) / (243.04 + t_sen));
+      float mag_scd = expf((17.625 * t_scd) / (243.04 + t_scd));
 
       // Calculate Actual Room RH for each sensor
       float true_rh_sen = rh_sen * (mag_sen / mag_room);
